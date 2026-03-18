@@ -193,23 +193,63 @@ function switchTopic(label) {
 async function fetchNews() {
   showLoading();
   const q = encodeURIComponent(activeTopic.query);
-  const rss = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`;
-  const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}&count=18`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status!=='ok'||!data.items?.length){showError();return;}
-    const articles = data.items.map((item,i)=>({
-      title: item.title,
-      excerpt: stripHtml(item.description||item.content||'Nothing yet.'),
-      source: extractSource(item.author||''),
-      date: formatDate(item.pubDate),
-      url: item.link,
-      imageUrl: item.enclosure?.link||item.thumbnail||IMGS[i%IMGS.length],
-      category: activeTopic.label==='All'?guessCat(item.title):activeTopic.label,
-    }));
-    renderArticles(articles);
-  } catch(e){showError();}
+  const rssUrl = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`;
+
+  // Try multiple proxy services in order — if one fails, try the next
+  const proxies = [
+    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=18`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
+  ];
+
+  for (let i = 0; i < proxies.length; i++) {
+    try {
+      const res = await fetch(proxies[i], {signal: AbortSignal.timeout(8000)});
+      if (!res.ok) continue;
+
+      let articles = [];
+
+      if (i === 0) {
+        // rss2json returns JSON directly
+        const data = await res.json();
+        if (data.status !== 'ok' || !data.items?.length) continue;
+        articles = data.items.map((item, idx) => ({
+          title: item.title,
+          excerpt: stripHtml(item.description || item.content || ''),
+          source: extractSource(item.author || ''),
+          date: formatDate(item.pubDate),
+          url: item.link,
+          imageUrl: item.enclosure?.link || item.thumbnail || IMGS[idx % IMGS.length],
+          category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label,
+        }));
+      } else {
+        // allorigins/corsproxy return raw XML — parse it
+        let xml = '';
+        if (i === 1) {
+          const json = await res.json();
+          xml = json.contents;
+        } else {
+          xml = await res.text();
+        }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xml, 'text/xml');
+        const items = [...doc.querySelectorAll('item')].slice(0, 18);
+        if (!items.length) continue;
+        articles = items.map((item, idx) => ({
+          title: item.querySelector('title')?.textContent || '',
+          excerpt: stripHtml(item.querySelector('description')?.textContent || ''),
+          source: extractSource(item.querySelector('source')?.textContent || ''),
+          date: formatDate(item.querySelector('pubDate')?.textContent || ''),
+          url: item.querySelector('link')?.textContent || '#',
+          imageUrl: IMGS[idx % IMGS.length],
+          category: activeTopic.label === 'All' ? guessCat(item.querySelector('title')?.textContent || '') : activeTopic.label,
+        }));
+      }
+
+      if (articles.length) { renderArticles(articles); return; }
+    } catch(e) { continue; }
+  }
+  showError();
 }
 
 function renderArticles(articles) {
