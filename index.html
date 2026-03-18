@@ -190,65 +190,94 @@ function switchTopic(label) {
   fetchNews();
 }
 
+// Parse XML RSS into article objects
+function parseXML(xml, idx_offset) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'text/xml');
+  const items = [...doc.querySelectorAll('item')].slice(0, 18);
+  if (!items.length) return [];
+  return items.map((item, idx) => {
+    const getText = (tag) => item.querySelector(tag)?.textContent?.trim() || '';
+    // Google News wraps real URL in <link> which is tricky — try both
+    const linkEl = item.querySelector('link');
+    const url = linkEl?.textContent || linkEl?.nextSibling?.textContent || getText('guid') || '#';
+    return {
+      title: getText('title'),
+      excerpt: stripHtml(getText('description') || ''),
+      source: getText('source') || extractSource(getText('author')),
+      date: formatDate(getText('pubDate')),
+      url: url,
+      imageUrl: IMGS[(idx + idx_offset) % IMGS.length],
+      category: activeTopic.label === 'All' ? guessCat(getText('title')) : activeTopic.label,
+    };
+  });
+}
+
+async function tryFetch(url, timeout = 8000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(id);
+    if (!res.ok) throw new Error('bad status');
+    return res;
+  } catch(e) { clearTimeout(id); throw e; }
+}
+
 async function fetchNews() {
   showLoading();
   const q = encodeURIComponent(activeTopic.query);
   const rssUrl = `https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`;
+  const enc = encodeURIComponent(rssUrl);
 
-  // Try multiple proxy services in order — if one fails, try the next
-  const proxies = [
-    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=18`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
-  ];
+  // Strategy 1: rss2json (best — returns clean JSON)
+  try {
+    const res = await tryFetch(`https://api.rss2json.com/v1/api.json?rss_url=${enc}&count=18`);
+    const data = await res.json();
+    if (data.status === 'ok' && data.items?.length) {
+      const articles = data.items.map((item, idx) => ({
+        title: item.title,
+        excerpt: stripHtml(item.description || item.content || ''),
+        source: extractSource(item.author || item.source?.name || ''),
+        date: formatDate(item.pubDate),
+        url: item.link,
+        imageUrl: item.enclosure?.link || item.thumbnail || IMGS[idx % IMGS.length],
+        category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label,
+      }));
+      renderArticles(articles); return;
+    }
+  } catch(e) {}
 
-  for (let i = 0; i < proxies.length; i++) {
-    try {
-      const res = await fetch(proxies[i], {signal: AbortSignal.timeout(8000)});
-      if (!res.ok) continue;
-
-      let articles = [];
-
-      if (i === 0) {
-        // rss2json returns JSON directly
-        const data = await res.json();
-        if (data.status !== 'ok' || !data.items?.length) continue;
-        articles = data.items.map((item, idx) => ({
-          title: item.title,
-          excerpt: stripHtml(item.description || item.content || ''),
-          source: extractSource(item.author || ''),
-          date: formatDate(item.pubDate),
-          url: item.link,
-          imageUrl: item.enclosure?.link || item.thumbnail || IMGS[idx % IMGS.length],
-          category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label,
-        }));
-      } else {
-        // allorigins/corsproxy return raw XML — parse it
-        let xml = '';
-        if (i === 1) {
-          const json = await res.json();
-          xml = json.contents;
-        } else {
-          xml = await res.text();
-        }
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xml, 'text/xml');
-        const items = [...doc.querySelectorAll('item')].slice(0, 18);
-        if (!items.length) continue;
-        articles = items.map((item, idx) => ({
-          title: item.querySelector('title')?.textContent || '',
-          excerpt: stripHtml(item.querySelector('description')?.textContent || ''),
-          source: extractSource(item.querySelector('source')?.textContent || ''),
-          date: formatDate(item.querySelector('pubDate')?.textContent || ''),
-          url: item.querySelector('link')?.textContent || '#',
-          imageUrl: IMGS[idx % IMGS.length],
-          category: activeTopic.label === 'All' ? guessCat(item.querySelector('title')?.textContent || '') : activeTopic.label,
-        }));
-      }
-
+  // Strategy 2: allorigins (returns JSON wrapper with XML inside)
+  try {
+    const res = await tryFetch(`https://api.allorigins.win/get?url=${enc}`);
+    const data = await res.json();
+    if (data.contents) {
+      const articles = parseXML(data.contents, 0);
       if (articles.length) { renderArticles(articles); return; }
-    } catch(e) { continue; }
-  }
+    }
+  } catch(e) {}
+
+  // Strategy 3: allorigins raw
+  try {
+    const res = await tryFetch(`https://api.allorigins.win/raw?url=${enc}`);
+    const xml = await res.text();
+    if (xml) {
+      const articles = parseXML(xml, 2);
+      if (articles.length) { renderArticles(articles); return; }
+    }
+  } catch(e) {}
+
+  // Strategy 4: thingproxy
+  try {
+    const res = await tryFetch(`https://thingproxy.freeboard.io/fetch/${rssUrl}`);
+    const xml = await res.text();
+    if (xml) {
+      const articles = parseXML(xml, 4);
+      if (articles.length) { renderArticles(articles); return; }
+    }
+  } catch(e) {}
+
   showError();
 }
 
