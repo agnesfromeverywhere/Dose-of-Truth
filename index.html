@@ -597,17 +597,6 @@ const IMGS = Array.from({length:18},(_,i)=>`https://picsum.photos/seed/psych${i+
 let activeTopic = TOPICS[0];
 let currentPage = null;
 let _allArticles = [];
-let currentPage = null;
-let _allArticles = [];
-
-function filterBySearch(q) {
-  if (!_allArticles.length) return;
-  const filtered = q ? _allArticles.filter(a => 
-    a.title.toLowerCase().includes(q.toLowerCase()) || 
-    a.source.toLowerCase().includes(q.toLowerCase())
-  ) : _allArticles;
-  renderArticles(filtered, true);
-}
 
 function renderFilters() {
   // Count articles per topic
@@ -664,13 +653,7 @@ async function fetchNews() {
   // STRATEGY 1: Our own Vercel serverless function /api/rss
   // This runs server-side — no CORS, no blocks
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch('/api/rss?q=' + encodeURIComponent(q), {
-      signal: controller.signal,
-      cache: 'no-cache'
-    });
-    clearTimeout(timer);
+    const res = await fetch('/api/rss?q=' + encodeURIComponent(q));
     if (res.ok) {
       const xml = await res.text();
       if (xml && xml.includes('<item>')) {
@@ -1042,13 +1025,13 @@ function renderGlossary() {
     ['MDMA', '3,4-methylenedioxymethamphetamine. Empathogen/entactogen with therapeutic potential for PTSD. Rejected by FDA in 2024 pending further trials. Currently in Phase 3 research globally.'],
     ['Microdosing', 'Taking sub-perceptual doses of psychedelics (typically 1/10th of a full dose) on a regular schedule. Associated with improved mood, focus, and creativity. Evidence base still emerging.'],
     ['Mystical Experience', 'A profound state characterised by unity, sacredness, noetic quality, and transcendence of time and space. Correlated with positive long-term outcomes in psychedelic therapy research.'],
-    ['Neuroplasticity', 'The brain's ability to reorganise itself by forming new neural connections. Psychedelics promote neuroplasticity, which may underlie their ability to break entrenched thought and behaviour patterns.'],
+    ['Neuroplasticity', "The brain's ability to reorganise itself by forming new neural connections. Psychedelics promote neuroplasticity, which may underlie their ability to break entrenched thought and behaviour patterns."],
     ['Psilocybin', 'The active compound in "magic mushrooms." Converts to psilocin in the body. Being studied for depression, anxiety, addiction, and end-of-life distress. FDA Breakthrough Therapy designation.'],
     ['Psychedelic-Assisted Therapy (PAT)', 'A therapeutic model combining psychedelic medicine with psychological support. Includes preparation, dosing sessions with trained therapists, and integration work.'],
     ['PTSD', 'Post-Traumatic Stress Disorder. A mental health condition triggered by traumatic events. One of the primary indications being studied for MDMA-assisted therapy.'],
     ['Set and Setting', 'Coined by Timothy Leary. "Set" refers to mindset (intentions, expectations, emotional state). "Setting" refers to the physical and social environment. Both profoundly influence psychedelic experiences.'],
     ['Therapeutic Window', 'The dose range in which a drug produces beneficial effects without unacceptable side effects. For psychedelics, this typically means doses that produce meaningful subjective effects without overwhelming distress.'],
-    ['TGA (Therapeutic Goods Administration)', 'Australia's drug regulator. In July 2023, became the first national regulator to approve psychedelics (psilocybin and MDMA) for therapeutic use.'],
+    ['TGA (Therapeutic Goods Administration)', "Australia's drug regulator. In July 2023, became the first national regulator to approve psychedelics (psilocybin and MDMA) for therapeutic use."],
     ['Treatment-Resistant Depression (TRD)', 'Depression that has not responded to at least two adequate trials of antidepressants. A major indication for psilocybin therapy research.'],
   ];
 
