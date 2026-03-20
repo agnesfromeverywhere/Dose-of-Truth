@@ -427,6 +427,10 @@
     <button onclick="showSection('jobs')" id="tab-jobs" style="padding:5px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;">💼 Jobs</button>
     <button onclick="showSection('retreats')" id="tab-retreats" style="padding:5px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;">🏕️ Retreats</button>
     <button onclick="showSection('collab')" id="tab-collab" style="padding:5px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,rgba(139,92,246,0.3),rgba(244,114,182,0.2));color:rgba(255,255,255,0.85);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;border:1px solid rgba(139,92,246,0.3);">✨ Collaborate</button>
+    <span style="color:rgba(255,255,255,0.15);align-self:center;padding:0 4px;">|</span>
+    <button onclick="showPage('Legal Map')" id="tab-legalmap" style="padding:5px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:rgba(45,212,191,0.8);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;">🗺️ Legal Map</button>
+    <button onclick="showPage('Glossary')" id="tab-glossary" style="padding:5px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:rgba(167,139,250,0.8);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;">📖 Glossary</button>
+    <button onclick="showPage('PsyFinance')" id="tab-psyfinance" style="padding:5px 16px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:rgba(251,191,36,0.8);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;">💰 PsyFinance</button>
   </div>
     <div class="category-filters" id="categoryFilters"></div>
   </div>
@@ -578,80 +582,111 @@
 </footer>
 
 <script>
+// ─── CONFIGURATION ───────────────────────────────────────────
 const TOPICS = [
   {label:'All',        query:'psychedelic therapy'},
   {label:'Psilocybin', query:'psilocybin therapy'},
   {label:'MDMA',       query:'MDMA therapy PTSD'},
   {label:'Ketamine',   query:'ketamine therapy depression'},
   {label:'LSD',        query:'LSD therapy clinical'},
+  {label:'Cannabis',   query:'cannabis therapy mental health'},
   {label:'Ayahuasca',  query:'ayahuasca therapy'},
   {label:'Policy',     query:'psychedelic policy law regulation'},
   {label:'Research',   query:'psychedelic research clinical trial'},
   {label:'Culture',    query:'psychedelic culture mental health'},
 ];
 
-// Special pages — not news topics
 const SPECIAL_PAGES = ['Legal Map', 'Glossary', 'PsyFinance'];
 
-const IMGS = Array.from({length:18},(_,i)=>`https://picsum.photos/seed/psych${i+1}/800/500`);
-let activeTopic = TOPICS[0];
-let currentPage = null;
+const IMGS = Array.from({length:18}, (_, i) => `https://picsum.photos/seed/psych${i+1}/800/500`);
+
+// ─── SHARED STATE ────────────────────────────────────────────
+let activeTopic  = TOPICS[0];
+let currentPage  = null;
 let _allArticles = [];
 
+// ─── RENDER FILTERS ──────────────────────────────────────────
 function renderFilters() {
-  // Count articles per topic
-  function getCount(label) {
-    if (!window._lastArticles) return '';
-    if (label === 'All') return window._lastArticles.length;
-    return window._lastArticles.filter(a => a.category === label).length || '';
-  }
-  document.getElementById('categoryFilters').innerHTML = TOPICS.map(t => {
-    const cnt = getCount(t.label);
-    const badge = cnt ? `<span class="topic-count">${cnt}</span>` : '';
-    return `<button class="filter-btn${activeTopic.label===t.label?' active':''}" data-topic="${t.label}" onclick="switchTopic('${t.label}')">${t.label}${badge}</button>`;
-  }).join('') +
-  `<span style="margin:0 8px;color:rgba(255,255,255,0.15);align-self:center;">|</span>` +
-  SPECIAL_PAGES.map(p =>
-    `<button class="filter-btn special-btn${currentPage===p?' active':''}" data-topic="${p}" onclick="showPage('${p}')" style="border-color:rgba(139,92,246,0.4);color:rgba(139,92,246,0.9);">${p}</button>`
-  ).join('');
+  const topicBtns = TOPICS.map(t => {
+    const isActive = activeTopic.label === t.label && currentPage === null;
+    return `<button class="filter-btn${isActive ? ' active' : ''}" onclick="switchTopic('${t.label}')">${t.label}</button>`;
+  }).join('');
+
+  const specialBtns = SPECIAL_PAGES.map(p => {
+    const isActive = currentPage === p;
+    return `<button class="filter-btn${isActive ? ' active' : ''}" onclick="showPage('${p}')">${p}</button>`;
+  }).join('');
+
+  document.getElementById('categoryFilters').innerHTML = topicBtns +
+    `<span style="color:rgba(255,255,255,0.15);align-self:center;padding:0 6px;">|</span>` +
+    specialBtns;
 }
 
+// ─── TOPIC SWITCHING ─────────────────────────────────────────
 function switchTopic(label) {
-  activeTopic = TOPICS.find(t=>t.label===label);
-  currentPage = null;
-  document.getElementById('searchInput').style.display='';
+  activeTopic  = TOPICS.find(t => t.label === label) || TOPICS[0];
+  currentPage  = null;
+  const si = document.getElementById('searchInput');
+  if (si) { si.style.display = ''; si.value = ''; }
   renderFilters();
   fetchNews();
 }
 
-// Parse XML RSS into article objects
+// ─── SPECIAL PAGE DISPLAY ────────────────────────────────────
+function showPage(page) {
+  currentPage = page;
+
+  // Hide search
+  const si = document.getElementById('searchInput');
+  if (si) si.style.display = 'none';
+
+  // Clear news-specific UI
+  const hero = document.getElementById('hero');
+  const sb   = document.getElementById('statusBar');
+  const ls   = document.getElementById('loadingState');
+  const emp  = document.getElementById('empty');
+  if (hero) hero.innerHTML = '';
+  if (sb)   sb.style.display  = 'none';
+  if (ls)   ls.style.display  = 'none';
+  if (emp)  emp.style.display = 'none';
+
+  renderFilters();
+
+  if (page === 'Legal Map')   renderLegalMap();
+  else if (page === 'Glossary')    renderGlossary();
+  else if (page === 'PsyFinance')  renderPsyFinance();
+}
+
+// ─── PARSE XML ───────────────────────────────────────────────
 function parseXML(xml, offset) {
   try {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    const items = [...doc.querySelectorAll('item')].slice(0, 18);
+    const doc    = parser.parseFromString(xml, 'text/xml');
+    const items  = [...doc.querySelectorAll('item')].slice(0, 18);
     if (!items.length) return [];
     return items.map((item, i) => {
-      const g = tag => { try { return item.querySelector(tag)?.textContent?.trim() || ''; } catch(e){ return ''; }};
+      // getElementsByTagName is more reliable than querySelector for <link> in text/xml
+      const g   = tag => { try { return item.getElementsByTagName(tag)[0]?.textContent?.trim() || ''; } catch(e) { return ''; } };
+      const url = g('link') || g('guid') || '#';
       return {
-        title: g('title'),
-        excerpt: stripHtml(g('description') || ''),
-        source: g('source') || extractSource(g('author') || ''),
-        date: formatDate(g('pubDate')),
-        url: g('link') || g('guid') || '#',
+        title:    g('title'),
+        excerpt:  stripHtml(g('description') || ''),
+        source:   g('source') || extractSource(g('author') || ''),
+        date:     formatDate(g('pubDate')),
+        url:      url.startsWith('http') ? url : '#',
         imageUrl: IMGS[(i + offset) % IMGS.length],
-        category: activeTopic.label === 'All' ? guessCat(g('title')) : activeTopic.label,
+        category: guessCat(g('title')),
       };
-    });
+    }).filter(a => a.title && a.url !== '#');
   } catch(e) { return []; }
 }
 
+// ─── FETCH NEWS ──────────────────────────────────────────────
 async function fetchNews() {
   showLoading();
   const q = activeTopic.query;
 
-  // STRATEGY 1: Our own Vercel serverless function /api/rss
-  // This runs server-side — no CORS, no blocks
+  // Strategy 1: own Vercel proxy — no CORS issues
   try {
     const res = await fetch('/api/rss?q=' + encodeURIComponent(q));
     if (res.ok) {
@@ -663,30 +698,28 @@ async function fetchNews() {
     }
   } catch(e) { console.warn('Proxy failed:', e.message); }
 
-  // STRATEGY 2: rss2json.com - converts RSS to JSON with CORS headers
+  // Strategy 2: rss2json
   try {
     const rss = encodeURIComponent('https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en');
     const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + rss + '&count=18');
     if (res.ok) {
       const data = await res.json();
       if (data.status === 'ok' && data.items && data.items.length) {
-        const arts = data.items.map(function(item, i) {
-          return {
-            title: item.title || '',
-            excerpt: stripHtml(item.description || item.content || ''),
-            source: extractSource(item.author || ''),
-            date: formatDate(item.pubDate),
-            url: item.link || '#',
-            imageUrl: (item.enclosure && item.enclosure.link) || item.thumbnail || IMGS[i % IMGS.length],
-            category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label
-          };
-        }).filter(function(a) { return a.title && a.url !== '#'; });
+        const arts = data.items.map((item, i) => ({
+          title:    item.title || '',
+          excerpt:  stripHtml(item.description || item.content || ''),
+          source:   extractSource(item.author || ''),
+          date:     formatDate(item.pubDate),
+          url:      item.link || '#',
+          imageUrl: (item.enclosure && item.enclosure.link) || item.thumbnail || IMGS[i % IMGS.length],
+          category: guessCat(item.title),
+        })).filter(a => a.title && a.url !== '#');
         if (arts.length) { renderArticles(arts); return; }
       }
     }
   } catch(e) { console.warn('rss2json failed:', e.message); }
 
-  // STRATEGY 3: allorigins JSON wrapper
+  // Strategy 3: allorigins
   try {
     const rss = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en';
     const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(rss));
@@ -699,7 +732,7 @@ async function fetchNews() {
     }
   } catch(e) { console.warn('allorigins failed:', e.message); }
 
-  // STRATEGY 4: corsproxy.io
+  // Strategy 4: corsproxy
   try {
     const rss = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en';
     const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(rss));
@@ -715,131 +748,106 @@ async function fetchNews() {
   showError();
 }
 
+// ─── FILTER BY SEARCH ────────────────────────────────────────
 function filterBySearch(val) {
   if (!_allArticles.length) return;
-  const q = val.toLowerCase().trim();
-  if (!q) { renderArticles(_allArticles, true); return; }
+  const q = val.trim().toLowerCase();
+  if (!q) {
+    renderArticles(_allArticles, true);
+    return;
+  }
   const filtered = _allArticles.filter(a =>
-    a.title.toLowerCase().includes(q) ||
+    a.title.toLowerCase().includes(q)  ||
     a.excerpt.toLowerCase().includes(q) ||
     a.source.toLowerCase().includes(q)
   );
-  renderArticles(filtered.length ? filtered : _allArticles, true);
+  // Show filtered results (or empty state), never fall back to all articles on zero matches
+  renderArticles(filtered, true);
 }
 
+// ─── RENDER ARTICLES ─────────────────────────────────────────
+function renderArticles(articles, skipStore) {
+  skipStore = skipStore || false;
+  if (!skipStore) {
+    _allArticles = articles;
+    renderFilters();
+  }
 
-function renderArticles(articles, skipStore) { skipStore = skipStore || false;
-  if (!skipStore) { _allArticles = articles; window._lastArticles = articles; renderFilters(); } 
-  document.getElementById('loadingState').style.display='none';
+  document.getElementById('loadingState').style.display = 'none';
+
   const sb = document.getElementById('statusBar');
-  sb.style.display='flex';
-  const now = new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('statusText').textContent=`Live — updated at ${now} · ${articles.length} articles`;
+  sb.style.display = 'flex';
+  const now = new Date().toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('statusText').textContent = `Live — updated at ${now} · ${articles.length} articles`;
 
-  const hero=document.getElementById('hero');
-  const grid=document.getElementById('grid');
-  document.getElementById('empty').style.display='none';
+  const hero  = document.getElementById('hero');
+  const grid  = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  empty.style.display = 'none';
 
-  if(!articles.length){hero.innerHTML='';grid.innerHTML='';document.getElementById('empty').style.display='block';return;}
+  if (!articles.length) {
+    hero.innerHTML  = '';
+    grid.innerHTML  = '';
+    empty.style.display = 'block';
+    return;
+  }
 
-  const a=articles[0];
-  hero.innerHTML=`<div class="hero" onclick="window.open('${esc(a.url)}','_blank')" style="animation:fadeUp 0.6s ease both">
+  const a = articles[0];
+  hero.innerHTML = `<a class="hero" href="${esc(a.url)}" target="_blank" rel="noopener" style="animation:fadeUp 0.6s ease both;display:block;text-decoration:none;">
     <img src="${esc(a.imageUrl)}" alt="" onerror="this.src='${IMGS[0]}'" loading="lazy"/>
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <span class="category-badge">${esc(a.category)}</span>
       <h2 class="hero-title">${esc(a.title)}</h2>
-      <p class="hero-excerpt">${esc(a.excerpt.slice(0,180))}...</p>
+      <p class="hero-excerpt">${esc(a.excerpt.slice(0, 180))}...</p>
       <div class="hero-meta"><span class="source">${esc(a.source)}</span><span class="dot">•</span><span>${a.date}</span></div>
-    </div></div>`;
+    </div></a>`;
 
-  grid.innerHTML=articles.slice(1).map((art,i)=>`
-    <a class="article-card" href="${esc(art.url)}" target="_blank" rel="noopener" style="animation-delay:${i*0.06}s">
+  grid.innerHTML = articles.slice(1).map((art, i) => `
+    <a class="article-card" href="${esc(art.url)}" target="_blank" rel="noopener" style="animation-delay:${i * 0.06}s">
       <div class="card-image">
-        <img src="${esc(art.imageUrl)}" alt="" onerror="this.src='${IMGS[i%IMGS.length]}'" loading="lazy"/>
+        <img src="${esc(art.imageUrl)}" alt="" onerror="this.src='${IMGS[i % IMGS.length]}'" loading="lazy"/>
         <span class="card-cat">${esc(art.category)}</span>
       </div>
       <div class="card-body">
         <h3 class="card-title">${esc(art.title)}</h3>
-        <p class="card-excerpt">${esc(art.excerpt.slice(0,160))}...</p>
+        <p class="card-excerpt">${esc(art.excerpt.slice(0, 160))}...</p>
         <div class="card-footer"><span class="card-source">${esc(art.source)}</span><span>${art.date}</span></div>
-      <span class="read-more">Read article →</span>
+        <span class="read-more">Read article →</span>
       </div></a>`).join('');
 }
 
-function showLoading(){
-  document.getElementById('hero').innerHTML='';
-  document.getElementById('grid').innerHTML='';
-  document.getElementById('empty').style.display='none';
-  document.getElementById('statusBar').style.display='none';
-  document.getElementById('loadingState').style.display='grid';
+// ─── LOADING / ERROR STATES ──────────────────────────────────
+function showLoading() {
+  document.getElementById('hero').innerHTML         = '';
+  document.getElementById('grid').innerHTML         = '';
+  document.getElementById('empty').style.display   = 'none';
+  document.getElementById('statusBar').style.display = 'none';
+  document.getElementById('loadingState').style.display = 'grid';
 }
 
-function showError(){
-  document.getElementById('loadingState').style.display='none';
-  document.getElementById('statusBar').style.display='none';
-  document.getElementById('grid').innerHTML=`<div class="error-msg" style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+function showError() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('statusBar').style.display    = 'none';
+  document.getElementById('grid').innerHTML = `<div class="error-msg" style="grid-column:1/-1;text-align:center;padding:60px 20px;">
     <p style="color:rgba(255,255,255,0.5);font-size:1rem;margin-bottom:16px;">Could not load articles right now.</p>
     <button onclick="fetchNews()" style="padding:10px 28px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:white;font-family:'DM Sans',sans-serif;cursor:pointer;font-size:0.9rem;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">Try again</button>
   </div>`;
 }
 
-function stripHtml(h){return h.replace(/<[^>]*>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim();}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function extractSource(a){if(!a)return'News';return a.replace(/^via\s+/i,'').split(',')[0].trim()||'News';}
-function formatDate(d){if(!d)return'';const dt=new Date(d);if(isNaN(dt))return'';const diff=Math.floor((new Date()-dt)/1000);if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';if(diff<604800)return Math.floor(diff/86400)+'d ago';return dt.toLocaleDateString('en-AU',{day:'numeric',month:'short'});}
-function guessCat(t){t=t.toLowerCase();if(t.includes('psilocybin')||t.includes('mushroom'))return'Psilocybin';if(t.includes('mdma')||t.includes('ecstasy'))return'MDMA';if(t.includes('ketamine'))return'Ketamine';if(t.includes('lsd')||t.includes('lysergic'))return'LSD';if(t.includes('ayahuasca')||t.includes('dmt'))return'Ayahuasca';if(t.includes('law')||t.includes('policy')||t.includes('legal')||t.includes('regulat'))return'Policy';if(t.includes('trial')||t.includes('study')||t.includes('research'))return'Research';return'Culture';}
-// Rate limiting for newsletter
-let _lastSubmit = 0;
-function handleSubscribe(e){
-  e.preventDefault();
-  const now = Date.now();
-  if (now - _lastSubmit < 30000) {
-    alert('Please wait 30 seconds before trying again.');
-    return;
-  }
-  _lastSubmit = now;
-  const email = document.getElementById('emailInput')?.value || '';
-  // Basic email validation
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert('Please enter a valid email address.');
-    return;
-  }
-  const b = e.target.querySelector('button');
-  b.textContent = '✓ Redirecting...';
-  b.style.background = '#0d9488';
-  b.style.color = 'white';
-  window.open('https://beehiiv.com/subscribe?email='+encodeURIComponent(email), '_blank');
-  setTimeout(()=>{b.textContent='Subscribe';b.style.background='white';b.style.color='#1A1A1A';},3000);
-}
-
-// ── SECTION SWITCHING ──────────────────────────────────────
-function showPage(page) {
-  currentPage = page;
-  document.getElementById('searchInput').style.display = 'none';
-  document.getElementById('hero').innerHTML = '';
-  document.getElementById('statusBar').style.display = 'none';
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('empty').style.display = 'none';
-  renderFilters();
-  if (page === 'Legal Map') renderLegalMap();
-  else if (page === 'Glossary') renderGlossary();
-  else if (page === 'PsyFinance') renderPsyFinance();
-}
-
+// ─── SECTION SWITCHING (tabs: News / Jobs / Retreats / Collab) ──
 function showSection(name) {
   const isNews = name === 'news';
 
-  // Toggle tab styles
   ['news','jobs','retreats','collab'].forEach(s => {
-    const tab = document.getElementById('tab-'+s);
+    const tab = document.getElementById('tab-' + s);
     if (tab) {
       tab.style.background = s === name ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)';
-      tab.style.color = s === name ? 'white' : 'rgba(255,255,255,0.6)';
+      tab.style.color      = s === name ? 'white'                  : 'rgba(255,255,255,0.6)';
     }
   });
 
-  // Show/hide news-specific elements (hero, grid, loading etc)
+  // Show/hide news elements
   ['hero','grid','loadingState','statusBar','section-news'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isNews ? '' : 'none';
@@ -848,37 +856,86 @@ function showSection(name) {
 
   // Show/hide non-news sections
   ['jobs','retreats','collab'].forEach(s => {
-    const el = document.getElementById('section-'+s);
+    const el = document.getElementById('section-' + s);
     if (el) el.style.display = s === name ? 'block' : 'none';
   });
 
-  // Filters + search bar only for news
+  // Filters + search visible only on news
   const fw = document.querySelector('.filters-wrap');
   const sw = document.querySelector('.search-wrap');
   if (fw) fw.style.display = isNews ? 'block' : 'none';
   if (sw) sw.style.display = isNews ? 'block' : 'none';
 
-  // Render section content
-  if (isNews) fetchNews();
-  else if (name === 'jobs') renderJobs('all');
-  else if (name === 'retreats') renderRetreats('all','all');
+  if (isNews)              fetchNews();
+  else if (name === 'jobs')     renderJobs('all');
+  else if (name === 'retreats') renderRetreats('all', 'all');
 }
 
-// ── JOBS DATA ──────────────────────────────────────────────
+// ─── UTILITIES ───────────────────────────────────────────────
+function stripHtml(h) {
+  return h.replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim();
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function extractSource(a) {
+  if (!a) return 'News';
+  return a.replace(/^via\s+/i,'').split(',')[0].trim() || 'News';
+}
+function formatDate(d) {
+  if (!d) return '';
+  const dt   = new Date(d);
+  if (isNaN(dt)) return '';
+  const diff = Math.floor((new Date() - dt) / 1000);
+  if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
+  if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return dt.toLocaleDateString('en-AU', {day:'numeric', month:'short'});
+}
+function guessCat(t) {
+  t = t.toLowerCase();
+  if (t.includes('psilocybin') || t.includes('mushroom')) return 'Psilocybin';
+  if (t.includes('mdma')       || t.includes('ecstasy'))  return 'MDMA';
+  if (t.includes('ketamine'))                              return 'Ketamine';
+  if (t.includes('lsd')        || t.includes('lysergic')) return 'LSD';
+  if (t.includes('ayahuasca')  || t.includes('dmt'))      return 'Ayahuasca';
+  if (t.includes('law')  || t.includes('policy') || t.includes('legal') || t.includes('regulat')) return 'Policy';
+  if (t.includes('trial') || t.includes('study') || t.includes('research'))                       return 'Research';
+  return 'Culture';
+}
+
+// ─── NEWSLETTER ──────────────────────────────────────────────
+let _lastSubmit = 0;
+function handleSubscribe(e) {
+  e.preventDefault();
+  const now = Date.now();
+  if (now - _lastSubmit < 30000) { alert('Please wait 30 seconds before trying again.'); return; }
+  _lastSubmit = now;
+  const email = document.getElementById('emailInput')?.value || '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address.'); return; }
+  const b = e.target.querySelector('button');
+  b.textContent = '✓ Redirecting...';
+  b.style.background = '#0d9488';
+  b.style.color = 'white';
+  window.open('https://beehiiv.com/subscribe?email=' + encodeURIComponent(email), '_blank');
+  setTimeout(() => { b.textContent = 'Subscribe'; b.style.background = 'white'; b.style.color = '#1A1A1A'; }, 3000);
+}
+
+// ─── JOBS ────────────────────────────────────────────────────
 const JOBS = [
-  {title:'Psilocybin Therapy Facilitator',company:'Synthesis Institute',location:'Amsterdam, Netherlands',type:'Full-time',category:'Clinical',url:'https://synthesisretreat.com',badge:'Featured'},
-  {title:'Clinical Research Coordinator',company:'MAPS',location:'San Jose, CA — Remote',type:'Full-time',category:'Research',url:'https://maps.org/careers',badge:''},
-  {title:'Ketamine-Assisted Therapy Nurse',company:'Mindbloom',location:'New York, NY',type:'Full-time',category:'Clinical',url:'https://mindbloom.com',badge:''},
-  {title:'Policy Analyst — Psychedelic Reform',company:'Drug Policy Alliance',location:'Washington, DC',type:'Full-time',category:'Policy',url:'https://drugpolicy.org',badge:''},
-  {title:'Integration Therapist (Remote)',company:'Enthea',location:'Remote',type:'Contract',category:'Clinical',url:'https://enthea.com',badge:'New'},
-  {title:'Psychedelic Research Scientist',company:'Compass Pathways',location:'London, UK',type:'Full-time',category:'Research',url:'https://compasspathways.com',badge:''},
-  {title:'Retreat Program Coordinator',company:'Rythmia Life Advancement',location:'Costa Rica',type:'Full-time',category:'Operations',url:'https://rythmia.com',badge:''},
-  {title:'Content & Community Manager',company:'Psychedelic Alpha',location:'Remote',type:'Part-time',category:'Media',url:'https://psychedelicalpha.com',badge:'New'},
+  {title:'Clinical Research Coordinator',    company:'MAPS',                    location:'San Jose, CA — Remote', type:'Full-time', category:'Research',   url:'https://maps.org/about/jobs/',                           badge:''},
+  {title:'Psychedelic Research Scientist',   company:'Compass Pathways',        location:'London, UK',            type:'Full-time', category:'Research',   url:'https://www.compasspathways.com/about/careers/',         badge:''},
+  {title:'Integration Therapist (Remote)',   company:'Enthea',                  location:'Remote',                type:'Contract',  category:'Clinical',   url:'https://www.enthea.com/careers',                        badge:'New'},
+  {title:'Policy Analyst — Psychedelic Reform', company:'Drug Policy Alliance', location:'Washington, DC',        type:'Full-time', category:'Policy',     url:'https://drugpolicy.org/about-us/jobs/',                  badge:''},
+  {title:'Ketamine-Assisted Therapy Nurse',  company:'Mindbloom',               location:'New York, NY',          type:'Full-time', category:'Clinical',   url:'https://www.mindbloom.com/careers',                     badge:''},
+  {title:'Retreat Program Coordinator',      company:'Rythmia Life Advancement',location:'Costa Rica',            type:'Full-time', category:'Operations', url:'https://www.rythmia.com/employment.html',               badge:''},
+  {title:'Psychedelic Therapy Facilitator',  company:'Numinus Wellness',        location:'Vancouver, Canada',     type:'Full-time', category:'Clinical',   url:'https://numinus.com/careers/',                          badge:'Featured'},
+  {title:'Content & Community Manager',      company:'Psychedelic Alpha',       location:'Remote',                type:'Part-time', category:'Media',      url:'https://psychedelicalpha.com/about',                    badge:'New'},
 ];
 
 const JOB_CATEGORY_COLORS = {
   'Clinical':'#2dd4bf','Research':'#a78bfa','Policy':'#60a5fa',
-  'Operations':'#fb923c','Media':'#f472b6'
+  'Operations':'#fb923c','Media':'#f472b6',
 };
 
 function renderJobs(filter) {
@@ -886,7 +943,7 @@ function renderJobs(filter) {
   if (!list) return;
   const jobs = filter === 'all' ? JOBS : JOBS.filter(j => j.category === filter);
   list.innerHTML = jobs.map(j => {
-    const col = JOB_CATEGORY_COLORS[j.category] || '#ffffff';
+    const col   = JOB_CATEGORY_COLORS[j.category] || '#ffffff';
     const badge = j.badge ? `<span style="background:linear-gradient(135deg,rgba(45,212,191,0.3),rgba(139,92,246,0.2));border:1px solid rgba(45,212,191,0.3);color:#2dd4bf;font-size:0.65rem;padding:2px 8px;border-radius:999px;font-weight:700;">${j.badge}</span>` : '';
     return `<a href="${j.url}" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;transition:all 0.25s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.18)';this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
@@ -903,21 +960,23 @@ function renderJobs(filter) {
   }).join('');
 }
 
-// ── RETREATS DATA ─────────────────────────────────────────
+// ─── RETREATS ────────────────────────────────────────────────
 const RETREATS = [
-  {name:'Synthesis Retreat',location:'Amsterdam, Netherlands',region:'europe',substance:'psilocybin',duration:'5 days',price:'€3,000',verified:true,url:'https://synthesisretreat.com',desc:'Legal psilocybin therapy in a clinical setting with licensed therapists.'},
-  {name:'Rythmia Life Advancement',location:'Guanacaste, Costa Rica',region:'americas',substance:'ayahuasca',duration:'7 days',price:'$3,500',verified:true,url:'https://rythmia.com',desc:'All-inclusive ayahuasca retreat centre with certified shamans and integration support.'},
-  {name:'Behold Retreats',location:'Netherlands & Switzerland',region:'europe',substance:'psilocybin',duration:'3 days',price:'€2,500',verified:true,url:'https://beholdretreats.com',desc:'Personalised, medically supervised psilocybin retreats with expert facilitators.'},
-  {name:'Soltara Healing Center',location:'Puntarenas, Costa Rica',region:'americas',substance:'ayahuasca',duration:'8 days',price:'$2,800',verified:false,url:'https://soltara.co',desc:'Traditional ayahuasca ceremonies with Shipibo healers in a jungle setting.'},
-  {name:'Mynd Medicine',location:'Vancouver, Canada',region:'americas',substance:'ketamine',duration:'1 day',price:'CAD $1,200',verified:true,url:'https://myndmedicine.com',desc:'Ketamine-assisted psychotherapy with licensed Canadian mental health professionals.'},
-  {name:'Numinus Wellness',location:'Multiple — Canada',region:'americas',substance:'mdma',duration:'3 weeks',price:'CAD $4,000',verified:true,url:'https://numinus.com',desc:'Evidence-based MDMA-assisted therapy for PTSD in licensed Canadian clinics.'},
+  {name:'Rythmia Life Advancement',   location:'Guanacaste, Costa Rica',       region:'americas',     substance:'ayahuasca',  duration:'7 days',      price:'From $4,500',         verified:true, url:'https://www.rythmia.com/',                                       desc:"The world's only medically licensed ayahuasca resort. All-inclusive luxury with doctors, nurses and on-site clinic."},
+  {name:'Soltara Healing Center',      location:'Puntarenas, Costa Rica',       region:'americas',     substance:'ayahuasca',  duration:'5–12 days',   price:'From $2,800',         verified:true, url:'https://soltara.co/retreats/',                                   desc:'Guided by Peruvian Shipibo master healers with Dr Gabor Maté advisory support.'},
+  {name:'Behold Retreats',             location:'Costa Rica & Mexico',          region:'americas',     substance:'ayahuasca',  duration:'6 days',      price:'From $3,500',         verified:true, url:'https://www.behold-retreats.com/',                               desc:'Premium small-group ayahuasca retreats combining ancestral knowledge with modern comfort.'},
+  {name:'Tandava Retreats',            location:'Mexico City, Mexico',          region:'americas',     substance:'psilocybin', duration:'5 days',      price:'From $2,000',         verified:true, url:'https://www.tandavaretreats.com/',                               desc:'Legal psilocybin retreats in Mexico with licensed therapists and a trauma-informed approach.'},
+  {name:'Numinus Wellness',            location:'Vancouver & Toronto, Canada',  region:'americas',     substance:'mdma',       duration:'3 weeks',     price:'CAD $3,500',          verified:true, url:'https://numinus.com/psychedelic-assisted-therapy/',              desc:'Evidence-based MDMA and psilocybin-assisted therapy for PTSD in licensed Canadian clinics.'},
+  {name:'Synthesis Institute',         location:'Netherlands',                  region:'europe',       substance:'psilocybin', duration:'5 days',      price:'From €3,000',         verified:true, url:'https://www.synthesisinstitute.com/immersion-retreats',          desc:'Legal psilocybin truffle retreats in the Netherlands.'},
+  {name:'MycoMeditations',             location:'Treasure Beach, Jamaica',      region:'americas',     substance:'psilocybin', duration:'7 days',      price:'From $3,500',         verified:true, url:'https://mycomeditations.com/',                                   desc:'Legal psilocybin retreats in Jamaica. One of the longest-running retreat centres in the world.'},
+  {name:'Heroic Hearts Project',       location:'Multiple — USA & International',region:'americas',   substance:'psilocybin', duration:'Varies',      price:'Subsidised for veterans',verified:true,url:'https://heroicheartsproject.org/',                              desc:'Non-profit offering subsidised psychedelic therapy retreats specifically for veterans with PTSD.'},
 ];
 
 function renderRetreats(region, substance) {
   const list = document.getElementById('retreats-list');
   if (!list) return;
   const filtered = RETREATS.filter(r =>
-    (region === 'all' || r.region === region) &&
+    (region    === 'all' || r.region    === region) &&
     (substance === 'all' || r.substance === substance)
   );
   if (!filtered.length) {
@@ -943,61 +1002,45 @@ function renderRetreats(region, substance) {
 }
 
 function filterRetreats() {
-  const region = document.getElementById('retreatRegion')?.value || 'all';
-  const substance = document.getElementById('retreatSubstance')?.value || 'all';
-  renderRetreats(region, substance);
+  renderRetreats(
+    document.getElementById('retreatRegion')?.value    || 'all',
+    document.getElementById('retreatSubstance')?.value || 'all'
+  );
 }
-
 
 // ─── LEGAL MAP ───────────────────────────────────────────────
 function renderLegalMap() {
   const grid = document.getElementById('grid');
   const legalData = [
-    // [Country, Psilocybin, MDMA, Ketamine, Ayahuasca, Notes]
-    ['🇦🇺 Australia',     'Medical',    'Medical',    'Prescription', 'Legal',       'TGA approved Jul 2023'],
-    ['🇧🇷 Brazil',        'Decrim',     'Illegal',    'Prescription', 'Legal',       'Religious use legal'],
-    ['🇨🇦 Canada',        'Exemptions', 'Exemptions', 'Prescription', 'Grey zone',   'Section 56 exemptions'],
-    ['🇳🇱 Netherlands',   'Truffles OK','Illegal',    'Prescription', 'Legal',       'Truffles not mushrooms'],
-    ['🇵🇹 Portugal',      'Decrim',     'Decrim',     'Prescription', 'Decrim',      'All drugs decrim 2001'],
-    ['🇺🇸 Oregon',        'Licensed',   'Research',   'Prescription', 'Grey zone',   'Measure 109 active'],
-    ['🇺🇸 Colorado',      'Licensed',   'Research',   'Prescription', 'Grey zone',   'Prop 122 active'],
-    ['🇺🇸 California',    'Decrim',     'Research',   'Prescription', 'Grey zone',   'SB 58 passed 2023'],
-    ['🇨🇭 Switzerland',   'Research',   'Research',   'Prescription', 'Illegal',     'Compassionate use'],
-    ['🇬🇧 UK',            'Illegal',    'Research',   'Prescription', 'Illegal',     'Schedule 1 substances'],
-    ['🇩🇪 Germany',       'Research',   'Research',   'Prescription', 'Illegal',     'Trials underway'],
-    ['🇯🇲 Jamaica',       'Legal',      'Grey zone',  'Prescription', 'Legal',       'No psilocybin law'],
-    ['🇲🇽 Mexico',        'Indigenous', 'Illegal',    'Prescription', 'Indigenous',  'Religious/traditional use'],
-    ['🇮🇱 Israel',        'Research',   'Research',   'Prescription', 'Illegal',     'Phase 2 trials'],
-    ['🇳🇿 New Zealand',   'Research',   'Research',   'Prescription', 'Illegal',     'Following AU closely'],
+    ['🇦🇺 Australia',    'Medical',    'Medical',    'Prescription', 'Legal',       'TGA approved Jul 2023'],
+    ['🇧🇷 Brazil',       'Decrim',     'Illegal',    'Prescription', 'Legal',       'Religious use legal'],
+    ['🇨🇦 Canada',       'Exemptions', 'Exemptions', 'Prescription', 'Grey zone',   'Section 56 exemptions'],
+    ['🇳🇱 Netherlands',  'Truffles OK','Illegal',    'Prescription', 'Legal',       'Truffles not mushrooms'],
+    ['🇵🇹 Portugal',     'Decrim',     'Decrim',     'Prescription', 'Decrim',      'All drugs decrim 2001'],
+    ['🇺🇸 Oregon',       'Licensed',   'Research',   'Prescription', 'Grey zone',   'Measure 109 active'],
+    ['🇺🇸 Colorado',     'Licensed',   'Research',   'Prescription', 'Grey zone',   'Prop 122 active'],
+    ['🇺🇸 California',   'Decrim',     'Research',   'Prescription', 'Grey zone',   'SB 58 passed 2023'],
+    ['🇨🇭 Switzerland',  'Research',   'Research',   'Prescription', 'Illegal',     'Compassionate use'],
+    ['🇬🇧 UK',           'Illegal',    'Research',   'Prescription', 'Illegal',     'Schedule 1 substances'],
+    ['🇩🇪 Germany',      'Research',   'Research',   'Prescription', 'Illegal',     'Trials underway'],
+    ['🇯🇲 Jamaica',      'Legal',      'Grey zone',  'Prescription', 'Legal',       'No psilocybin law'],
+    ['🇲🇽 Mexico',       'Indigenous', 'Illegal',    'Prescription', 'Indigenous',  'Religious/traditional use'],
+    ['🇮🇱 Israel',       'Research',   'Research',   'Prescription', 'Illegal',     'Phase 2 trials'],
+    ['🇳🇿 New Zealand',  'Research',   'Research',   'Prescription', 'Illegal',     'Following AU closely'],
   ];
-
   const colorMap = {
     'Legal':'#22c55e','Medical':'#0d9488','Licensed':'#0d9488',
-    'Decrim':'#f59e0b','Exemptions':'#a78bfa','Research':'#60a5fa',
-    'Indigenous':'#f97316','Truffles OK':'#10b981','Grey zone':'#6b7280',
-    'Prescription':'#6366f1','Illegal':'rgba(255,255,255,0.2)'
+    'Decrim':'#f59e0b','Truffles OK':'#10b981','Exemptions':'#60a5fa',
+    'Research':'#a78bfa','Indigenous':'#fb923c',
+    'Prescription':'#64748b','Grey zone':'#94a3b8','Illegal':'#ef4444',
   };
-  const textMap = {
-    'Legal':'#fff','Medical':'#fff','Licensed':'#fff',
-    'Decrim':'#1a1a1a','Exemptions':'#fff','Research':'#fff',
-    'Indigenous':'#fff','Truffles OK':'#fff','Grey zone':'#fff',
-    'Prescription':'#fff','Illegal':'rgba(255,255,255,0.5)'
-  };
+  const badge = s => `<span style="background:${(colorMap[s]||'#6b7280')}22;color:${colorMap[s]||'#9ca3af'};border:1px solid ${(colorMap[s]||'#6b7280')}44;padding:3px 10px;border-radius:999px;font-size:0.72rem;font-weight:600;white-space:nowrap;">${s}</span>`;
 
-  function badge(status) {
-    const bg = colorMap[status] || 'rgba(255,255,255,0.1)';
-    const col = textMap[status] || 'white';
-    return `<span style="background:${bg};color:${col};padding:2px 8px;border-radius:999px;font-size:0.68rem;font-weight:600;white-space:nowrap;">${status}</span>`;
-  }
-
-  grid.style.display='block';
+  grid.style.display = 'block';
   grid.innerHTML = `
     <div style="animation:fadeUp 0.4s ease;grid-column:1/-1;">
-      <h2 style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:400;margin-bottom:8px;background:linear-gradient(90deg,#0d9488,#a78bfa,#f472b6);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Legal Status Map</h2>
-      <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:24px;">Current regulatory status by country. Always verify locally — laws change rapidly.</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;font-size:0.75rem;">
-        ${Object.entries(colorMap).slice(0,8).map(([k,v])=>`<span style="display:flex;align-items:center;gap:4px;color:rgba(255,255,255,0.65);"><span style="width:10px;height:10px;border-radius:50%;background:${v};display:inline-block;"></span>${k}</span>`).join('')}
-      </div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:400;margin-bottom:8px;background:linear-gradient(90deg,#22c55e,#0d9488,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Global Legal Status Map</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:24px;">Current regulatory status of key psychedelic substances by country.</p>
       <div style="overflow-x:auto;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
         <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
           <thead>
@@ -1011,8 +1054,8 @@ function renderLegalMap() {
             </tr>
           </thead>
           <tbody>
-            ${legalData.map((row,i)=>`
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:${i%2===0?'transparent':'rgba(255,255,255,0.02)'};">
+            ${legalData.map((row, i) => `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'};">
                 <td style="padding:14px 16px;color:white;font-weight:600;">${row[0]}</td>
                 <td style="padding:14px 16px;text-align:center;">${badge(row[1])}</td>
                 <td style="padding:14px 16px;text-align:center;">${badge(row[2])}</td>
@@ -1023,7 +1066,7 @@ function renderLegalMap() {
           </tbody>
         </table>
       </div>
-      <p style="margin-top:16px;font-size:0.72rem;color:rgba(255,255,255,0.3);">⚠️ This is for informational purposes only. Laws change — always verify current regulations in your jurisdiction. Last updated March 2026.</p>
+      <p style="margin-top:16px;font-size:0.72rem;color:rgba(255,255,255,0.3);">⚠️ For informational purposes only. Laws change — always verify current regulations in your jurisdiction. Last updated March 2026.</p>
     </div>`;
 }
 
@@ -1060,7 +1103,7 @@ function renderGlossary() {
     grouped[letter].push([term, def]);
   });
 
-  grid.style.display='block';
+  grid.style.display = 'block';
   grid.innerHTML = `
     <div style="animation:fadeUp 0.4s ease;grid-column:1/-1;">
       <h2 style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:400;margin-bottom:8px;background:linear-gradient(90deg,#2dd4bf,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Psychedelic Therapy Glossary</h2>
@@ -1080,30 +1123,24 @@ function renderGlossary() {
 // ─── PSYFINANCE ──────────────────────────────────────────────
 function renderPsyFinance() {
   const grid = document.getElementById('grid');
-
   const deals = [
-    {date:'Aug 2025', company:'Gilgamesh Pharmaceuticals', deal:'Acquired by AbbVie', amount:'$1.2B', type:'Acquisition', substance:'Bretisilocin (psilocybin)', stage:'Phase 2'},
-    {date:'2025', company:'Compass Pathways', deal:'Phase 3 trials ongoing', amount:'Listed (CMPS)', type:'Public', substance:'COMP360 (psilocybin)', stage:'Phase 3'},
-    {date:'2025', company:'Cybin', deal:'Rebranded to Helus', amount:'Listed (CYBN)', type:'Public', substance:'CYB003 (psilocybin)', stage:'Phase 3'},
-    {date:'2025', company:'Lykos Therapeutics', deal:'FDA CRL — seeking resubmission', amount:'Private', type:'Pipeline', substance:'MDMA', stage:'Phase 3'},
-    {date:'2024', company:'MindMed', deal:'Nasdaq listed', amount:'Listed (MNMD)', type:'Public', substance:'MM120 (LSD)', stage:'Phase 3'},
-    {date:'2024', company:'Atai Life Sciences', deal:'Multiple pipeline assets', amount:'Listed (ATAI)', type:'Public', substance:'Multiple', stage:'Phase 2/3'},
-    {date:'2023', company:'Awakn Life Sciences', deal:'Series A funding', amount:'$20M', type:'Funding', substance:'Ketamine/MDMA', stage:'Phase 2'},
-    {date:'2023', company:'Field Trip Health', deal:'Restructured to Journey Clinical', amount:'Private', type:'Restructure', substance:'Ketamine', stage:'Commercial'},
+    {date:'Aug 2025', company:'Gilgamesh Pharmaceuticals', deal:'Acquired by AbbVie',                     amount:'$1.2B',         type:'Acquisition', substance:'Bretisilocin (psilocybin)', stage:'Phase 2'},
+    {date:'2025',     company:'Compass Pathways',          deal:'Phase 3 trials ongoing',                 amount:'Listed (CMPS)', type:'Public',      substance:'COMP360 (psilocybin)',       stage:'Phase 3'},
+    {date:'2025',     company:'Cybin',                     deal:'Rebranded to Helus',                     amount:'Listed (CYBN)', type:'Public',      substance:'CYB003 (psilocybin)',        stage:'Phase 3'},
+    {date:'2025',     company:'Lykos Therapeutics',        deal:'FDA CRL — seeking resubmission',         amount:'Private',       type:'Pipeline',    substance:'MDMA',                      stage:'Phase 3'},
+    {date:'2024',     company:'MindMed',                   deal:'Nasdaq listed',                          amount:'Listed (MNMD)', type:'Public',      substance:'MM120 (LSD)',                stage:'Phase 3'},
+    {date:'2024',     company:'Atai Life Sciences',        deal:'Multiple pipeline assets',               amount:'Listed (ATAI)', type:'Public',      substance:'Multiple',                  stage:'Phase 2/3'},
+    {date:'2023',     company:'Awakn Life Sciences',       deal:'Series A funding',                       amount:'$20M',          type:'Funding',     substance:'Ketamine/MDMA',             stage:'Phase 2'},
+    {date:'2023',     company:'Field Trip Health',         deal:'Restructured to Journey Clinical',       amount:'Private',       type:'Restructure', substance:'Ketamine',                  stage:'Commercial'},
   ];
+  const typeColors = {'Acquisition':'#f472b6','Public':'#0d9488','Funding':'#a78bfa','Pipeline':'#f59e0b','Restructure':'#60a5fa'};
 
-  const typeColors = {
-    'Acquisition':'#f472b6','Public':'#0d9488','Funding':'#a78bfa',
-    'Pipeline':'#f59e0b','Restructure':'#60a5fa'
-  };
-
-  grid.style.display='block';
+  grid.style.display = 'block';
   grid.innerHTML = `
     <div style="animation:fadeUp 0.4s ease;grid-column:1/-1;">
       <h2 style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:400;margin-bottom:8px;background:linear-gradient(90deg,#f472b6,#fbbf24,#0d9488);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">PsyFinance</h2>
       <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:8px;">Funding rounds, acquisitions, public listings and pipeline updates in the psychedelic industry.</p>
       <p style="color:rgba(255,255,255,0.3);font-size:0.72rem;margin-bottom:24px;">⚠️ Not financial advice. Always do your own research.</p>
-
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;">
         <div style="background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.2);border-radius:14px;padding:20px;">
           <div style="font-size:0.7rem;color:rgba(244,114,182,0.8);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Biggest Deal 2025</div>
@@ -1121,7 +1158,6 @@ function renderPsyFinance() {
           <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:4px;">Multiple FDA decisions expected</div>
         </div>
       </div>
-
       <div style="overflow-x:auto;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
         <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
           <thead>
@@ -1135,8 +1171,8 @@ function renderPsyFinance() {
             </tr>
           </thead>
           <tbody>
-            ${deals.map((d,i)=>`
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:${i%2===0?'transparent':'rgba(255,255,255,0.02)'};">
+            ${deals.map((d, i) => `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'};">
                 <td style="padding:14px 16px;color:rgba(255,255,255,0.5);white-space:nowrap;">${d.date}</td>
                 <td style="padding:14px 16px;color:white;font-weight:600;">${d.company}</td>
                 <td style="padding:14px 16px;color:rgba(255,255,255,0.7);">${d.deal}</td>
@@ -1147,7 +1183,6 @@ function renderPsyFinance() {
           </tbody>
         </table>
       </div>
-
       <div style="margin-top:24px;padding:20px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:14px;">
         <div style="font-size:0.8rem;color:rgba(251,191,36,0.8);font-weight:600;margin-bottom:6px;">📈 2026 Watch List</div>
         <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);line-height:1.7;">Compass Pathways (Phase 3 psilocybin results), MindMed MM120 FDA filing, multiple MDMA resubmission updates, and potential right-to-try legislation in the US.</div>
@@ -1155,21 +1190,24 @@ function renderPsyFinance() {
     </div>`;
 }
 
+// ─── INIT ────────────────────────────────────────────────────
 renderFilters();
 fetchNews();
-setInterval(fetchNews, 30*60*1000);
+setInterval(fetchNews, 30 * 60 * 1000);
 
-// Lightweight particles — only 8, CSS-only
-(function(){
+// Lightweight particles
+(function() {
   const c = document.getElementById('particles');
-  if(!c) return;
+  if (!c) return;
   const colors = ['#0d9488','#2dd4bf','#8b5cf6','#f472b6','#34d399','#60a5fa','#fb923c','#fbbf24'];
-  for(let i=0;i<8;i++){
-    const p = document.createElement('div');
-    const s = 2+Math.random()*4, col = colors[i];
-    const dur = 18+Math.random()*14, delay = Math.random()*12;
-    p.className='particle';
-    p.style.cssText=`width:${s}px;height:${s}px;background:${col};left:${Math.random()*100}%;bottom:-10px;animation-duration:${dur}s;animation-delay:${delay}s;box-shadow:0 0 ${s*2}px ${col};`;
+  for (let i = 0; i < 8; i++) {
+    const p   = document.createElement('div');
+    const s   = 2 + Math.random() * 4;
+    const col = colors[i];
+    const dur = 18 + Math.random() * 14;
+    const del = Math.random() * 12;
+    p.className = 'particle';
+    p.style.cssText = `width:${s}px;height:${s}px;background:${col};left:${Math.random()*100}%;bottom:-10px;animation-duration:${dur}s;animation-delay:${del}s;box-shadow:0 0 ${s*2}px ${col};`;
     c.appendChild(p);
   }
 })();
