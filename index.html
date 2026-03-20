@@ -650,57 +650,73 @@ async function fetchNews() {
   showLoading();
   const q = activeTopic.query;
 
-  // The Guardian Open Platform API — free, no proxy, no CORS issues
-  // 5000 requests/day free
-  const guardianKey = 'test'; // 'test' key works for basic queries
-  const guardianUrl = `https://content.guardianapis.com/search?q=${encodeURIComponent(q)}&section=science|society|world&show-fields=thumbnail,trailText,byline&page-size=20&order-by=newest&api-key=${guardianKey}`;
-
+  // STRATEGY 1: Our own Vercel serverless function /api/rss
+  // This runs server-side — no CORS, no blocks
   try {
-    const res = await fetch(guardianUrl);
-    const data = await res.json();
-    if (data.response?.results?.length) {
-      const articles = data.response.results.map((item, i) => ({
-        title: item.webTitle,
-        excerpt: stripHtml(item.fields?.trailText || ''),
-        source: 'The Guardian',
-        date: formatDate(item.webPublicationDate),
-        url: item.webUrl,
-        imageUrl: item.fields?.thumbnail || IMGS[i % IMGS.length],
-        category: activeTopic.label === 'All' ? guessCat(item.webTitle) : activeTopic.label,
-      }));
-      if (articles.length) { renderArticles(articles); return; }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch('/api/rss?q=' + encodeURIComponent(q), {
+      signal: controller.signal,
+      cache: 'no-cache'
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const xml = await res.text();
+      if (xml && xml.includes('<item>')) {
+        const arts = parseXML(xml, 0);
+        if (arts.length) { renderArticles(arts); return; }
+      }
     }
-  } catch(e) { console.warn('Guardian failed:', e); }
+  } catch(e) { console.warn('Proxy failed:', e.message); }
 
-  // Fallback: rss2json
+  // STRATEGY 2: rss2json.com - converts RSS to JSON with CORS headers
   try {
-    const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
-    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}&count=18`);
-    const data = await res.json();
-    if (data.status === 'ok' && data.items?.length) {
-      const articles = data.items.map((item, i) => ({
-        title: item.title,
-        excerpt: stripHtml(item.description || item.content || ''),
-        source: extractSource(item.author || ''),
-        date: formatDate(item.pubDate),
-        url: item.link,
-        imageUrl: item.enclosure?.link || item.thumbnail || IMGS[i % IMGS.length],
-        category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label,
-      }));
-      if (articles.length) { renderArticles(articles); return; }
+    const rss = encodeURIComponent('https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en');
+    const res = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + rss + '&count=18');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && data.items && data.items.length) {
+        const arts = data.items.map(function(item, i) {
+          return {
+            title: item.title || '',
+            excerpt: stripHtml(item.description || item.content || ''),
+            source: extractSource(item.author || ''),
+            date: formatDate(item.pubDate),
+            url: item.link || '#',
+            imageUrl: (item.enclosure && item.enclosure.link) || item.thumbnail || IMGS[i % IMGS.length],
+            category: activeTopic.label === 'All' ? guessCat(item.title) : activeTopic.label
+          };
+        }).filter(function(a) { return a.title && a.url !== '#'; });
+        if (arts.length) { renderArticles(arts); return; }
+      }
     }
-  } catch(e) { console.warn('rss2json failed:', e); }
+  } catch(e) { console.warn('rss2json failed:', e.message); }
 
-  // Fallback: allorigins
+  // STRATEGY 3: allorigins JSON wrapper
   try {
-    const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
-    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rss)}`);
-    const data = await res.json();
-    if (data.contents) {
-      const articles = parseXML(data.contents, 0);
-      if (articles.length) { renderArticles(articles); return; }
+    const rss = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en';
+    const res = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(rss));
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.contents && data.contents.includes('<item>')) {
+        const arts = parseXML(data.contents, 0);
+        if (arts.length) { renderArticles(arts); return; }
+      }
     }
-  } catch(e) { console.warn('allorigins failed:', e); }
+  } catch(e) { console.warn('allorigins failed:', e.message); }
+
+  // STRATEGY 4: corsproxy.io
+  try {
+    const rss = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q) + '&hl=en-US&gl=US&ceid=US:en';
+    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(rss));
+    if (res.ok) {
+      const xml = await res.text();
+      if (xml && xml.includes('<item>')) {
+        const arts = parseXML(xml, 0);
+        if (arts.length) { renderArticles(arts); return; }
+      }
+    }
+  } catch(e) { console.warn('corsproxy failed:', e.message); }
 
   showError();
 }
