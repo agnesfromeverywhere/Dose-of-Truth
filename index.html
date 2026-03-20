@@ -408,7 +408,7 @@
     lx.stroke();
   }
 
-  function loop(){t+=0.016;draw();drawLine();requestAnimationFrame(loop);}
+  function loop(){t+=0.012;draw();drawLine();requestAnimationFrame(loop);}
   loop();
 })();
 </script>
@@ -886,25 +886,19 @@ renderFilters();
 fetchNews();
 setInterval(fetchNews, 30*60*1000);
 
-// Floating spore particles
-(function spawnParticles(){
-  const container = document.getElementById('particles');
-  if (!container) return;
-  const colors = ['#0d9488','#2dd4bf','#8b5cf6','#f472b6','#fb923c','#fbbf24','#34d399','#60a5fa'];
-  function spawn(){
+// Lightweight particles — only 8, CSS-only
+(function(){
+  const c = document.getElementById('particles');
+  if(!c) return;
+  const colors = ['#0d9488','#2dd4bf','#8b5cf6','#f472b6','#34d399','#60a5fa','#fb923c','#fbbf24'];
+  for(let i=0;i<8;i++){
     const p = document.createElement('div');
-    p.className = 'particle';
-    const size = 2 + Math.random() * 5;
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const left = Math.random() * 100;
-    const dur = 12 + Math.random() * 20;
-    const delay = Math.random() * 15;
-    p.style.cssText = `width:${size}px;height:${size}px;background:${color};left:${left}%;bottom:-10px;opacity:0.7;animation-duration:${dur}s;animation-delay:${delay}s;box-shadow:0 0 ${size*2}px ${color};`;
-    container.appendChild(p);
-    setTimeout(() => p.remove(), (dur + delay) * 1000);
+    const s = 2+Math.random()*4, col = colors[i];
+    const dur = 18+Math.random()*14, delay = Math.random()*12;
+    p.className='particle';
+    p.style.cssText=`width:${s}px;height:${s}px;background:${col};left:${Math.random()*100}%;bottom:-10px;animation-duration:${dur}s;animation-delay:${delay}s;box-shadow:0 0 ${s*2}px ${col};`;
+    c.appendChild(p);
   }
-  for(let i=0;i<30;i++) spawn();
-  setInterval(spawn, 800);
 })();
 </script>
 </body>
