@@ -463,9 +463,7 @@
       <p style="color:rgba(255,255,255,0.55);font-size:1rem;max-width:540px;margin:0 auto 32px;">The latest job opportunities in psychedelic therapy — facilitators, researchers, clinicians, policy roles and startup positions.</p>
       <a href="mailto:jobs@thepsychedelicdigest.com?subject=Job Listing Submission" style="display:inline-block;padding:12px 28px;border-radius:999px;background:linear-gradient(135deg,rgba(13,148,136,0.3),rgba(45,212,191,0.15));border:1px solid rgba(45,212,191,0.4);color:#2dd4bf;text-decoration:none;font-size:0.85rem;font-weight:600;margin-bottom:48px;transition:all 0.2s;" onmouseover="this.style.background='rgba(45,212,191,0.2)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(13,148,136,0.3),rgba(45,212,191,0.15))'">Submit a Job Listing →</a>
     </div>
-    <div id="jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-bottom:48px;">
-      ${generateJobs()}
-    </div>
+    <div id="jobs-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-bottom:48px;"></div>
     <p style="text-align:center;color:rgba(255,255,255,0.3);font-size:0.8rem;padding-bottom:32px;">Jobs updated weekly. To list your position email jobs@thepsychedelicdigest.com</p>
   </div>
 
@@ -910,8 +908,6 @@ function filterRetreats() {
   const substance = document.getElementById('retreatSubstance')?.value || 'all';
   renderRetreats(region, substance);
 }
-
-function generateJobs() { return ''; }
 
 
 // ─── LEGAL MAP ───────────────────────────────────────────────
