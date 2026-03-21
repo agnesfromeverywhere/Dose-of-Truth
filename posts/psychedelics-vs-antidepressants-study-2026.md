@@ -1,11 +1,11 @@
-[psychedelics-vs-antidepressants-study-2026.md](https://github.com/user-attachments/files/26162322/psychedelics-vs-antidepressants-study-2026.md)
+[psychedelics-vs-antidepressants-study-2026.md](https://github.com/user-attachments/files/26162401/psychedelics-vs-antidepressants-study-2026.md)
 ---
 title: The New Study Says Psychedelics Are No Better Than Antidepressants. Here Is What It Actually Means.
 date: 2026-03-22
 author: Agnes Horry
-excerpt: A study published this week says psilocybin is no more effective than antidepressants. Before the internet implodes, let us read what it actually found.
+excerpt: A study published this week in JAMA Psychiatry says psilocybin is no more effective than antidepressants. Before the internet implodes, here is what it actually found.
 category: Research
-tags: psilocybin, antidepressants, clinical trials, depression, research, JAMA
+tags: psilocybin, antidepressants, clinical trials, depression, research, JAMA, placebo
 ---
 
 A study dropped this week in JAMA Psychiatry and the headline has been making the rounds: psychedelics are no better than antidepressants for depression.
@@ -14,15 +14,17 @@ I have seen this framed as a takedown of the entire field. It is not. But it is 
 
 ## What the Study Actually Did
 
-Researchers from UC San Francisco, UCLA, and Imperial College London looked at a fundamental problem in psychedelic research: the placebo issue.
+Researchers from UC San Francisco, UCLA, and Imperial College London tackled a fundamental problem in psychedelic research: the placebo problem.
 
-When you take psilocybin, you know you took psilocybin. The altered state makes blinding essentially impossible. Most people in a psilocybin trial know they got the real thing. This inflates the apparent effect, because expectation alone can drive significant improvements in depression.
+When you take psilocybin, you know you took psilocybin. The altered state makes blinding essentially impossible. Nearly everyone in a psilocybin trial knows they received the real thing. This inflates the apparent effect, because expectation alone can drive significant improvements in depression scores.
 
 Standard antidepressant trials do not have this problem. Participants often cannot tell if they got the drug or a sugar pill.
 
-So the researchers compared psychedelic trials against a specific subset of antidepressant trials: ones where participants also knew they were taking the real drug. Equal conditions. Same unblinding on both sides.
+So the researchers did something clever. They compared psychedelic trials not against standard placebo-controlled antidepressant trials, but against open-label antidepressant trials, where participants also knew they were taking the real drug. Equal conditions. Same unblinding on both sides.
 
-The result: both groups improved by about 12 points on standard depression scales. No significant difference.
+The result: both groups improved by about 12 points on standard depression scales. No significant difference between them.
+
+[Read the full study in JAMA Psychiatry](https://jamanetwork.com/journals/jamapsychiatry/article-abstract/2832557)
 
 ## What This Does Not Mean
 
@@ -30,35 +32,39 @@ It does not mean psychedelics do not work.
 
 Both treatments produced substantial, real improvements in depression. People got better. That matters.
 
-It also does not mean the existing psychedelic trial results were fabricated or wrong. They were real improvements. The question this study raises is whether the expectation effect was carrying more weight than previously understood.
+It does not mean the existing psychedelic trial results were fabricated or inflated. The improvements were real. The question this study raises is whether the expectation effect was carrying more weight than previously understood.
 
 And it does not settle the debate. This kind of retrospective comparison has its own methodological limits. The populations studied, the protocols used, and the integration support provided are not identical across trials. You cannot just line up numbers and declare a winner.
 
 ## What It Does Mean
 
-It means the field needs to reckon with the expectation effect more seriously than it has.
+It means the field needs to take the expectation effect more seriously than it has.
 
-This is not new information. Researchers have been raising the blinding problem in psychedelic trials for years. What this study does is quantify it in a way that is harder to dismiss.
+Researchers have been raising the blinding problem in psychedelic trials for years. What this study does is quantify it in a way that is harder to dismiss. That is useful. That is how science is supposed to work.
 
-It also means the case for psychedelics needs to be built on something more robust than "look how much better psilocybin is compared to placebo." Because that gap may partly be expectation, and expectation can be manufactured without psilocybin.
+It also means the case for psychedelics cannot rest on "look how much better psilocybin performs compared to placebo." That gap may partly be expectation. And expectation does not require a molecule.
 
-The stronger argument, to my mind, is this: even if psychedelics and antidepressants produce similar improvements on depression scales at a population level, they do not work the same way. Antidepressants require daily dosing, ongoing prescriptions, and produce dependence in many patients. A course of psilocybin therapy involves one or two sessions and the effects, in many studies, persist for months to years.
+## The Argument That Survives This Study
 
-That durability argument was not tested by this study. The mechanisms are completely different. The patient experience is completely different.
+The stronger argument for psychedelics has never been "it scores higher on depression scales at 12 weeks." The stronger argument is durability and mechanism.
+
+Antidepressants require daily dosing, often indefinitely. Many patients develop dependence. The effects stop when the drug stops.
+
+A course of psilocybin therapy typically involves one or two sessions. In multiple studies, remission has persisted for months to years after a single experience. That is a completely different therapeutic model, even if the 12-week depression score looks similar.
+
+That durability argument was not tested by this study. It needs to be tested rigorously. But it is the right question to be asking.
 
 ## The Honest Position
 
 The honest position is that we do not yet have a clean answer.
 
-Psychedelic therapy shows real promise. The durability data is compelling. The patient testimonials from people who had tried everything else and finally got relief are not nothing. But the methodology of many early trials was not as rigorous as it needed to be, and a study like this is a useful corrective.
+Psychedelic therapy shows real promise. The durability data is compelling. The testimonials from people who had tried everything else and finally found relief are not anecdote to be dismissed. But the methodology of many early trials was not as rigorous as it needed to be, and a study like this is a legitimate corrective.
 
 What I would not do is let this headline become an excuse to slow down access, defund research, or dismiss a treatment approach that is genuinely helping people who were not being helped by anything else.
 
 That would be the wrong lesson.
 
 The right lesson is: do better trials. Build the evidence base properly. And do not let expectation do all the work.
-
-This field is young. The science is still being written. That is not a weakness, it is just the truth.
 
 ---
 
