@@ -103,6 +103,7 @@ module.exports = (req, res) => {
       author:      meta.author      || 'The Psychedelic Digest',
       excerpt:     meta.excerpt     || body.slice(0, 160).replace(/\n/g, ' ') + '...',
       category:    meta.category    || 'Research',
+      image:       meta.image       || '',
       tags:        meta.tags        ? meta.tags.split(',').map(t => t.trim()) : [],
       readTime:    estimateReadTime(body),
       html:        mdToHtml(body),
@@ -129,6 +130,7 @@ module.exports = (req, res) => {
         author:   meta.author   || 'The Psychedelic Digest',
         excerpt:  meta.excerpt  || body.slice(0, 160).replace(/\n/g, ' ') + '...',
         category: meta.category || 'Research',
+        image:    meta.image    || '',
         tags:     meta.tags     ? meta.tags.split(',').map(t => t.trim()) : [],
         readTime: estimateReadTime(body),
       };
