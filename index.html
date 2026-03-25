@@ -1203,38 +1203,189 @@ function handleSubscribe(e) {
 
 // ─── JOBS ────────────────────────────────────────────────────
 const JOBS = [
-  {title:'Clinical Research Coordinator',    company:'MAPS',                    location:'San Jose, CA — Remote', type:'Full-time', category:'Research',   url:'https://maps.org/about/jobs/',                           badge:''},
-  {title:'Psychedelic Research Scientist',   company:'Compass Pathways',        location:'London, UK',            type:'Full-time', category:'Research',   url:'https://www.compasspathways.com/about/careers/',         badge:''},
-  {title:'Integration Therapist (Remote)',   company:'Enthea',                  location:'Remote',                type:'Contract',  category:'Clinical',   url:'https://www.enthea.com/careers',                        badge:'New'},
-  {title:'Policy Analyst — Psychedelic Reform', company:'Drug Policy Alliance', location:'Washington, DC',        type:'Full-time', category:'Policy',     url:'https://drugpolicy.org/about-us/jobs/',                  badge:''},
-  {title:'Ketamine-Assisted Therapy Nurse',  company:'Mindbloom',               location:'New York, NY',          type:'Full-time', category:'Clinical',   url:'https://www.mindbloom.com/careers',                     badge:''},
-  {title:'Retreat Program Coordinator',      company:'Rythmia Life Advancement',location:'Costa Rica',            type:'Full-time', category:'Operations', url:'https://www.rythmia.com/employment.html',               badge:''},
-  {title:'Psychedelic Therapy Facilitator',  company:'Numinus Wellness',        location:'Vancouver, Canada',     type:'Full-time', category:'Clinical',   url:'https://numinus.com/careers/',                          badge:'Featured'},
-  {title:'Content & Community Manager',      company:'Psychedelic Alpha',       location:'Remote',                type:'Part-time', category:'Media',      url:'https://psychedelicalpha.com/about',                    badge:'New'},
+  {
+    title:'Psychedelic Therapy Roles in Australia',
+    company:'SEEK Australia',
+    location:'Australia',
+    region:'australia',
+    type:'Live search',
+    category:'Clinical',
+    url:'https://www.seek.com.au/psychedelic-therapy-jobs',
+    badge:'AU'
+  },
+  {
+    title:'Psychedelic Therapy Roles by City',
+    company:'Jora Australia',
+    location:'Australia',
+    region:'australia',
+    type:'Live search',
+    category:'Research',
+    url:'https://au.jora.com/Psychedelic-Therapy-jobs-in-Australia',
+    badge:'AU'
+  },
+  {
+    title:'Global Psychedelic Job Board',
+    company:'Work in Psychedelics',
+    location:'Worldwide / Remote',
+    region:'global',
+    type:'Live board',
+    category:'Operations',
+    url:'https://www.workinpsychedelics.com/',
+    badge:'Remote'
+  },
+  {
+    title:'Medical and Clinical Careers',
+    company:'Compass Pathways',
+    location:'Global',
+    region:'global',
+    type:'Careers page',
+    category:'Research',
+    url:'https://compasspathways.com/join-us/',
+    badge:'Featured'
+  },
+  {
+    title:'Current Opportunities',
+    company:'MAPS',
+    location:'United States / Remote',
+    region:'global',
+    type:'Nonprofit',
+    category:'Research',
+    url:'https://maps.org/about-maps/careers/current-opportunities/',
+    badge:''
+  },
+  {
+    title:'Mental Health Benefits and Integration Roles',
+    company:'Enthea',
+    location:'Remote',
+    region:'global',
+    type:'Remote',
+    category:'Clinical',
+    url:'https://www.enthea.com/careers',
+    badge:'Remote'
+  },
+  {
+    title:'Policy and Drug Reform Careers',
+    company:'Drug Policy Alliance',
+    location:'United States / Hybrid',
+    region:'global',
+    type:'Advocacy',
+    category:'Policy',
+    url:'https://drugpolicy.org/about-us/jobs/',
+    badge:''
+  },
+  {
+    title:'Ketamine and Adjacent Care Roles',
+    company:'Mindbloom',
+    location:'Remote / United States',
+    region:'global',
+    type:'Careers page',
+    category:'Clinical',
+    url:'https://www.mindbloom.com/careers',
+    badge:''
+  },
+  {
+    title:'Retreat and Facilitation Opportunities',
+    company:'Work in Psychedelics',
+    location:'Worldwide',
+    region:'retreat',
+    type:'Retreats',
+    category:'Operations',
+    url:'https://www.workinpsychedelics.com/',
+    badge:'Retreats'
+  },
+  {
+    title:'Volunteer Pathways into the Field',
+    company:'MAPS',
+    location:'Worldwide',
+    region:'global',
+    type:'Volunteer',
+    category:'Media',
+    url:'https://maps.org/take-action/volunteers/',
+    badge:'Start here'
+  }
 ];
 
 const JOB_CATEGORY_COLORS = {
-  'Clinical':'#2dd4bf','Research':'#a78bfa','Policy':'#60a5fa',
-  'Operations':'#fb923c','Media':'#f472b6',
+  'Clinical':'#2dd4bf',
+  'Research':'#a78bfa',
+  'Policy':'#60a5fa',
+  'Operations':'#fb923c',
+  'Media':'#f472b6',
 };
 
-function renderJobs(filter) {
+let currentJobRegion = 'all';
+
+function getJobsFiltered(region) {
+  if (region === 'all') return JOBS;
+  return JOBS.filter(job => job.region === region);
+}
+
+function renderJobs(region = 'all') {
+  currentJobRegion = region;
+
+  const section = document.getElementById('section-jobs');
   const list = document.getElementById('jobs-list');
-  if (!list) return;
-  const jobs = filter === 'all' ? JOBS : JOBS.filter(j => j.category === filter);
+  if (!section || !list) return;
+
+  let filters = document.getElementById('jobs-filters');
+  if (!filters) {
+    filters = document.createElement('div');
+    filters.id = 'jobs-filters';
+    filters.style.cssText = 'display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:-8px 0 32px 0;';
+    const anchor = section.querySelector('#jobs-list');
+    section.insertBefore(filters, anchor);
+  }
+
+  const buttons = [
+    { id:'all', label:'All Jobs' },
+    { id:'australia', label:'Australia' },
+    { id:'global', label:'Worldwide' },
+    { id:'retreat', label:'Retreats' }
+  ];
+
+  filters.innerHTML = buttons.map(btn => {
+    const active = currentJobRegion === btn.id;
+    return `<button
+      onclick="renderJobs('${btn.id}')"
+      style="
+        padding:10px 16px;
+        border-radius:999px;
+        border:1px solid ${active ? 'rgba(45,212,191,0.45)' : 'rgba(255,255,255,0.10)'};
+        background:${active ? 'linear-gradient(135deg,rgba(13,148,136,0.20),rgba(167,139,250,0.12))' : 'rgba(255,255,255,0.04)'};
+        color:${active ? '#ffffff' : 'rgba(255,255,255,0.72)'};
+        font-family:'DM Sans',sans-serif;
+        font-size:0.82rem;
+        font-weight:600;
+        cursor:pointer;
+        transition:all .2s ease;
+      "
+    >${btn.label}</button>`;
+  }).join('');
+
+  const jobs = getJobsFiltered(region);
+
+  if (!jobs.length) {
+    list.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:rgba(255,255,255,0.45);">
+        No jobs found in this section yet.
+      </div>
+    `;
+    return;
+  }
+
   list.innerHTML = jobs.map(j => {
-    const col   = JOB_CATEGORY_COLORS[j.category] || '#ffffff';
-    const badge = j.badge ? `<span style="background:linear-gradient(135deg,rgba(45,212,191,0.3),rgba(139,92,246,0.2));border:1px solid rgba(45,212,191,0.3);color:#2dd4bf;font-size:0.65rem;padding:2px 8px;border-radius:999px;font-weight:700;">${j.badge}</span>` : '';
+    const col = JOB_CATEGORY_COLORS[j.category] || '#ffffff';
+    const badge = j.badge ? `<span style="background:linear-gradient(135deg,rgba(45,212,191,0.22),rgba(139,92,246,0.16));border:1px solid rgba(45,212,191,0.28);color:#2dd4bf;font-size:0.65rem;padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">${j.badge}</span>` : '';
     return `<a href="${j.url}" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;transition:all 0.25s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.18)';this.style.background='rgba(255,255,255,0.07)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-        <h3 style="font-size:1rem;font-weight:600;color:white;line-height:1.3;">${j.title}</h3>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;">
+        <h3 style="font-size:1rem;font-weight:600;color:white;line-height:1.35;margin:0;">${j.title}</h3>
         ${badge}
       </div>
-      <p style="color:rgba(255,255,255,0.55);font-size:0.82rem;margin-bottom:12px;">${j.company}</p>
+      <p style="color:rgba(255,255,255,0.58);font-size:0.84rem;margin:0 0 14px 0;">${j.company}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:0.72rem;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);">📍 ${j.location}</span>
-        <span style="font-size:0.72rem;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);">${j.type}</span>
-        <span style="font-size:0.72rem;padding:3px 10px;border-radius:999px;background:rgba(0,0,0,0.2);color:${col};border:1px solid ${col}33;">${j.category}</span>
+        <span style="font-size:0.72rem;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.68);">📍 ${j.location}</span>
+        <span style="font-size:0.72rem;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.68);">${j.type}</span>
+        <span style="font-size:0.72rem;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,0.2);color:${col};border:1px solid ${col}33;">${j.category}</span>
       </div>
     </a>`;
   }).join('');
