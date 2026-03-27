@@ -1,4 +1,3 @@
-[psychedelic-therapy-5-problems (1).md](https://github.com/user-attachments/files/26291432/psychedelic-therapy-5-problems.1.md)
 ---
 title: "5 Urgent Failures Blocking Psychedelic Therapy Access in 2026"
 date: "2026-03-27"
@@ -6,8 +5,14 @@ author: "The Psychedelic Digest"
 category: "Research"
 readTime: "8 min read"
 excerpt: "Reddit's psychedelic therapy communities point to the same 5 fractures every week. Here is what the data actually shows, and what still needs to be solved."
-coverImage: "/images/psychedelic-therapy-problems.jpg"
-tags: ["psychedelic therapy", "psilocybin", "MDMA", "mental health", "access", "harm reduction"]
+image: "/images/psychedelic-therapy-problems.jpg"
+tags:
+  - psychedelic therapy
+  - psilocybin
+  - MDMA
+  - mental health
+  - access
+  - harm reduction
 ---
 
 Psychedelic therapy is working. The clinical data is compelling, the cultural moment is real, and for the first time in decades, regulators in Australia, the Czech Republic, and parts of the United States are moving. And yet, for most people who need it, access remains a distant, expensive, and often dangerous proposition.
